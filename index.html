@@ -1,10 +1,10 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
   <head>
-    <meta charset="utf-8">
+    <meta charset="utf-8" />
     <title>Audio Landscape</title>
     <style>
-    body {
+      body {
         margin: 0;
         padding: 0;
         background: #fff;
@@ -12,16 +12,16 @@
         overflow: hidden;
         font-family: sans-serif;
         letter-spacing: -1px;
-    }
-    .LandscapeUI {
+      }
+      .LandscapeUI {
         position: absolute;
         top: 0;
         left: 0;
         right: 0;
         bottom: 0;
         height: 100%;
-    }
-    .LandscapeUI div {
+      }
+      .LandscapeUI div {
         position: relative;
         top: 50%;
         transform: translateY(-50%);
@@ -33,23 +33,23 @@
         width: 100px;
         margin: 0 auto;
         cursor: pointer;
-        background: rgba(255,255,255,0.3);
-    }
-    .twitter-share-button {
+        background: rgba(255, 255, 255, 0.3);
+      }
+      .twitter-share-button {
         z-index: 2;
         position: absolute;
         bottom: 5px;
         left: 5px;
-    }
-    .intro {
+      }
+      .intro {
         position: absolute;
         top: 0;
         left: 0;
         right: 0;
         bottom: 0;
         height: 100%;
-    }
-    .launch {
+      }
+      .launch {
         padding: 80px 160px;
         color: #333;
         border: 1px solid #333;
@@ -58,59 +58,110 @@
         width: 100px;
         margin: 10px auto;
         cursor: pointer;
-        background: rgba(255,255,255,0.3);
+        background: rgba(255, 255, 255, 0.3);
         list-style-type: none;
         text-align: center;
-    }
-    .support {
+      }
+      .support {
         position: absolute;
         bottom: 0;
         left: 0;
         right: 0;
         text-align: center;
-    }
-    .viz-menu {
-    }
-    .green-hills {
+      }
+      .viz-menu {
+      }
+      .green-hills {
         background: url(img/green-hills.png) center center;
-    }
-    .volcano {
+      }
+      .volcano {
         background: url(img/volcano.png) center center;
         color: #fff;
-    }
-    .vapor {
+      }
+      .vapor {
         background: url(img/vapor-bg.png) bottom center;
         text-shadow: 0 0 5px #fff;
-    }
+      }
+      .crystal {
+        background: url(img/crystal-cavern.jpg) center center;
+        color: #fff;
+        text-shadow: 0 0 3px #000;
+      }
+      .seasky {
+        background: url(img/sunset.jpg) center center / cover no-repeat;
+        color: #fff;
+        border: 2px solid #fff;
+        text-shadow: 0 0 3px #000;
+        box-shadow: 0 0 10px rgba(255, 255, 255, 0.4);
+      }
     </style>
   </head>
   <body>
     <section class="intro">
-        <ul class="viz-menu">
-            <li class="launch green-hills">Green hills</li>
-            <li class="launch volcano">Volcano</li>
-            <li class="launch vapor">Vapor</li>
-        </ul>
-        <p class="support">
-            This vis requires native browser support for HTML5 Audio and WebGL<br>
-            Recent Chrome and Firefox will be fine
-        </p>
+      <ul class="viz-menu">
+        <li class="launch green-hills">Green hills</li>
+        <li class="launch volcano">Volcano</li>
+        <li class="launch seasky">Sea & Sky</li>
+
+        <!-- <li class="launch crystal">Crystal Cavern</li> -->
+
+        <li class="launch vapor">Vapor</li>
+      </ul>
+      <p class="support">
+        This vis requires native browser support for HTML5 Audio and WebGL<br />
+        Recent Chrome and Firefox will be fine
+      </p>
     </section>
     <script src="bower_components/datgui/build/dat.gui.min.js"></script>
     <script src="bower_components/threejs/build/three.min.js"></script>
     <script src="js/stats.min.js"></script>
-    <script data-main="main" src="bower_components/requirejs/require.js"></script>
-    <a href="https://twitter.com/share" class="twitter-share-button" data-text="Check out this terrain mp3 visualiser, built with #threejs and #javascript" data-via="cham">Tweet</a>
-    <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+    <script
+      data-main="main"
+      src="bower_components/requirejs/require.js"
+    ></script>
+    <a
+      href="https://twitter.com/share"
+      class="twitter-share-button"
+      data-text="Check out this terrain mp3 visualiser, built with #threejs and #javascript"
+      data-via="cham"
+      >Tweet</a
+    >
     <script>
-      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+      !(function (d, s, id) {
+        var js,
+          fjs = d.getElementsByTagName(s)[0],
+          p = /^http:/.test(d.location) ? "http" : "https";
+        if (!d.getElementById(id)) {
+          js = d.createElement(s);
+          js.id = id;
+          js.src = p + "://platform.twitter.com/widgets.js";
+          fjs.parentNode.insertBefore(js, fjs);
+        }
+      })(document, "script", "twitter-wjs");
+    </script>
+    <script>
+      (function (i, s, o, g, r, a, m) {
+        i["GoogleAnalyticsObject"] = r;
+        (i[r] =
+          i[r] ||
+          function () {
+            (i[r].q = i[r].q || []).push(arguments);
+          }),
+          (i[r].l = 1 * new Date());
+        (a = s.createElement(o)), (m = s.getElementsByTagName(o)[0]);
+        a.async = 1;
+        a.src = g;
+        m.parentNode.insertBefore(a, m);
+      })(
+        window,
+        document,
+        "script",
+        "//www.google-analytics.com/analytics.js",
+        "ga"
+      );
 
-      ga('create', 'UA-59223920-1', 'auto');
-      ga('send', 'pageview');
-
+      ga("create", "UA-59223920-1", "auto");
+      ga("send", "pageview");
     </script>
   </body>
 </html>
