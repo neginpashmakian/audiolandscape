@@ -41,7 +41,7 @@ require(["viz"], function (viz) {
       waterColour: 0x0066cc, // bright blue sea
       skyMap: "img/sky.jpg", // ⬅️ use a new image if possible
       cameraHeight: 15,
-      mp3Url: "mp3/starworshipper.mp3",
+      mp3Url: "mp3/morning-mood-grieg.mp3",
 
       landscapeType: "inverted",
       mountainLevel: 20, // use normal if you want sea on bottom

@@ -218,28 +218,45 @@ define(function () {
   };
 
   Landscape.prototype.onAudioTick = function onAudioTick(frequencyData) {
-    var freqY;
-    for (var i = 0; i < this.resolution; i++) {
-      freqY = frequencyData[i] / 4;
-      this.geometry.vertices[this.resolution + i].y = freqY;
-      this.geometry.vertices[this.resolution - i].y = freqY;
+    const t = performance.now() * 0.002; // Time variable for continuous animation
+    const resolution = this.resolution;
+    const numRows = this.numRows;
+    const geometry = this.geometry;
+
+    const waveHeightBase = 4; // Base wave height
+    const waveFreqX = 0.25; // Horizontal wave frequency
+    const waveFreqZ = 0.15; // Vertical wave frequency
+    const audioBoost = 0.2; // Influence of audio on wave height
+
+    // Calculate average volume or bass for wave height adjustment
+    let sum = 0;
+    for (let i = 0; i < frequencyData.length; i++) {
+      sum += frequencyData[i];
     }
-    for (var j = this.numRows - 1; j > 0; j--) {
-      for (var k = 0; k < this.resolution * 2; k++) {
-        var offset = j * this.resolution * 2;
-        var prevRow = (j - 1) * this.resolution * 2;
-        this.geometry.vertices[offset + k].y =
-          this.geometry.vertices[prevRow + k].y;
+    const avgVolume = sum / frequencyData.length; // Average volume of frequencies
+    const waveHeight = waveHeightBase + avgVolume * audioBoost; // Adjust wave height based on volume
+
+    const vertices = geometry.vertices;
+
+    // Loop through vertices to apply dynamic wave effect
+    for (let z = 0; z < numRows; z++) {
+      for (let x = 0; x < resolution * 2; x++) {
+        const i = z * resolution * 2 + x;
+
+        const waveX = Math.sin(x * waveFreqX + t); // Horizontal wave
+        const waveZ = Math.cos(z * waveFreqZ + t * 1.5); // Vertical wave
+        const freq = frequencyData[x % resolution] || 0; // Audio frequency data
+
+        // Combined wave with slight audio variation
+        vertices[i].y = waveX * waveZ * waveHeight + freq * audioBoost * 0.1;
       }
     }
 
-    colourVertices(
-      this.geometry,
-      this.colours,
-      this.waterLevel,
-      this.mountainLevel
-    );
-    this.geometry.verticesNeedUpdate = true;
+    // Update geometry with new heights for each vertex
+    geometry.verticesNeedUpdate = true;
+
+    // Color the geometry based on water and mountain levels
+    colourVertices(geometry, this.colours, this.waterLevel, this.mountainLevel);
   };
 
   return Landscape;
