@@ -1,5 +1,6 @@
 require(["viz"], function (viz) {
   "use strict";
+
   function launchCrystalCavern() {
     viz({
       fogColour: 0x99ccff,
@@ -18,33 +19,24 @@ require(["viz"], function (viz) {
       landscapeType: "inverted",
     });
   }
+
   function launchSeaSky() {
     viz({
       useFog: false,
-      // darker blue for the sky/fog
       fogMinimumDistance: 400,
       landColours: [
-        0x002b5c, // deep ocean (navy blue)
-        0x004c99, // mid ocean (dark blue)
-        0x0077be, // light blue
-        0x00bfff, // turquoise / tropical shallows
-        0xaaddff, // very shallow water
-        0xe0f7fa, // near-surface / wave crest
-        0xf0f0e0, // white foam / sunlit highlight
+        0x002b5c, 0x004c99, 0x0077be, 0x00bfff, 0xaaddff, 0xe0f7fa, 0xf0f0e0,
       ],
-      // gradient from sea depth to coral/sand
       wireframeOverlay: true,
       spotlightColour: 0x88ccff,
       includeDetail: true,
-      wireframeOverlay: true,
-      detailType: "foam", // can simulate floating sparkles or bubbles
-      waterColour: 0x0066cc, // bright blue sea
-      skyMap: "img/sky.jpg", // ⬅️ use a new image if possible
+      detailType: "foam",
+      waterColour: 0x0066cc,
+      skyMap: "img/sky.jpg",
       cameraHeight: 15,
       mp3Url: "mp3/morning-mood-grieg.mp3",
-
       landscapeType: "inverted",
-      mountainLevel: 20, // use normal if you want sea on bottom
+      mountainLevel: 20,
     });
   }
 
@@ -101,27 +93,20 @@ require(["viz"], function (viz) {
   }
 
   function handleClick() {
-    var introNode = document.querySelector(".intro");
-    document.body.removeChild(introNode);
+    const introNode = document.querySelector(".intro");
+    if (introNode) introNode.remove();
 
-    if (this.className.indexOf("volcano") > -1) {
-      return launchVolcano();
-    }
-    if (this.className.indexOf("vapor") > -1) {
-      return launchVapor();
-    }
-    if (this.className.indexOf("crystal") > -1) {
-      return launchCrystalCavern();
-    }
-    if (this.className.indexOf("seasky") > -1) {
-      return launchSeaSky();
-    }
+    const cls = this.className;
+    if (cls.includes("volcano")) return launchVolcano();
+    if (cls.includes("vapor")) return launchVapor();
+    if (cls.includes("crystal")) return launchCrystalCavern();
+    if (cls.includes("seasky")) return launchSeaSky();
 
     launchHills();
   }
 
-  var links = Array.apply(null, document.querySelectorAll(".launch"));
-  links.forEach(function (link) {
+  const links = Array.from(document.querySelectorAll(".launch"));
+  links.forEach((link) => {
     link.addEventListener("click", handleClick, false);
   });
 });

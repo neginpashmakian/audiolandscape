@@ -9,7 +9,7 @@ define([
   "js/DragDropArrayBuffer",
   "js/LandscapeUI",
   "js/bird",
-  "js/boat", // <- ✅ new boat module
+  "js/boat",
 ], function (
   Landscape,
   LandscapeInverted,
@@ -21,7 +21,7 @@ define([
   DragDropArrayBuffer,
   LandscapeUI,
   Bird,
-  buildBoat // <- ✅ buildBoat function
+  buildBoat
 ) {
   "use strict";
 
@@ -35,17 +35,18 @@ define([
     }
 
     let birds = [];
-    let boat; // ✅ declare boat
+    let boat;
+    let audioStarted = false;
 
-    var stats = makeStats();
-    var resolution = 64;
-    var numRows = 105;
-    var waterLevel = 1;
-    var useFog = config.useFog !== false;
-    var systemX = -390;
-    var systemZ = 115;
+    const stats = makeStats();
+    const resolution = 64;
+    const numRows = 105;
+    const waterLevel = 1;
+    const useFog = config.useFog !== false;
+    const systemX = -390;
+    const systemZ = 115;
 
-    var sandbox = new Sandbox();
+    const sandbox = new Sandbox();
 
     if (config.skyMap) {
       const loader = new THREE.TextureLoader();
@@ -71,59 +72,59 @@ define([
       sandbox.scene.fog = new THREE.Fog(config.fogColour, 0, 800);
     }
 
-    var landscapeOptions = {
-      resolution: resolution,
-      numRows: numRows,
-      waterLevel: waterLevel,
+    const landscapeOptions = {
+      resolution,
+      numRows,
+      waterLevel,
       mountainLevel: config.mountainLevel || 50,
       unitsPerVertex: 6,
       colours: config.landColours,
-      cameraXRange: 150 / 2,
+      cameraXRange: 75,
       meshX: systemX,
       meshZ: systemZ,
       wireframeOverlay: config.wireframeOverlay,
     };
 
-    var landscape =
+    const landscape =
       config.landscapeType === "inverted"
         ? new LandscapeInverted(landscapeOptions)
         : new Landscape(landscapeOptions);
 
-    var landscapeDetails = new LandscapeDetails({
-      resolution: resolution,
-      numRows: numRows,
-      waterLevel: waterLevel,
+    const landscapeDetails = new LandscapeDetails({
+      resolution,
+      numRows,
+      waterLevel,
       offsetX: systemX,
       offsetZ: systemZ,
       type: config.detailType,
     });
 
-    var lighting = new Lighting({
-      resolution: resolution,
+    const lighting = new Lighting({
+      resolution,
       spotlightX: -52,
       spotlightZ: 900,
       spotlightColour: config.spotlightColour,
     });
 
-    var staticDecoration = new StaticDecoration({
-      waterLevel: waterLevel,
+    const staticDecoration = new StaticDecoration({
+      waterLevel,
       waterColour: config.waterColour,
       skyMap: config.skyMap,
     });
 
-    var cameraTargetY = 0;
-    var cameraAccel = 0;
+    let cameraTargetY = 0;
+    let cameraAccel = 0;
 
     function moveCamera() {
-      var delta = cameraTargetY - sandbox.camera.position.y;
-      var accelChange = delta / 100;
+      const delta = cameraTargetY - sandbox.camera.position.y;
+      const accelChange = delta / 100;
       cameraAccel += accelChange;
       cameraAccel *= 0.9;
       sandbox.camera.position.y += cameraAccel;
       if (sandbox.camera.position.y < 6) sandbox.camera.position.y = 6;
     }
 
-    var audio = new AudioData({
+    const audio = new AudioData({
       bufferWidth: resolution,
       onTick: function (freqArray) {
         landscape.onAudioTick(freqArray);
@@ -168,17 +169,16 @@ define([
       },
     });
 
-    // ✅ Create boat once
+    // === Add Boat ===
     boat = buildBoat();
-    boat.position.set(0, 4, 100); // Starting position
+    boat.position.set(0, 4, 100);
     sandbox.add(boat);
 
     function tick() {
       requestAnimationFrame(tick);
       stats.begin();
       sandbox.render();
-
-      moveCamera(); // still lets camera fly over waves
+      moveCamera();
 
       birds.forEach((bird) => {
         bird.position.z -= 1.5;
@@ -209,17 +209,59 @@ define([
       stats.end();
     }
 
+    // === Add to scene ===
     sandbox.add(staticDecoration.getObjects());
     sandbox.add(landscape.mesh);
     sandbox.add(lighting.getLighting());
 
-    var ui = new LandscapeUI();
+    const ui = new LandscapeUI();
+
+    // === Drag-and-drop handler ===
     ui.onDragAudio(function (arrayBuffer) {
+      if (audioStarted) return;
+      audioStarted = true;
+      ui.domNode.remove();
       audio.onLoadAudio(arrayBuffer);
     });
-    ui.onPlayDefault(function () {
+
+    // === MP3 Play Button ===
+    const playButton = document.createElement("div");
+    playButton.innerText = "Drag MP3 file,\nor click to playssss";
+    playButton.style.cursor = "pointer";
+    playButton.style.textAlign = "center";
+    playButton.style.whiteSpace = "pre-line";
+    playButton.style.border = "2px dashed #333";
+    playButton.style.borderRadius = "20px";
+    playButton.style.padding = "10px 20px";
+    playButton.style.background = "rgba(255, 255, 255, 0.3)";
+    playButton.onclick = function () {
+      if (audioStarted) return;
+      audioStarted = true;
+      ui.domNode.remove();
       audio.loadUrl(config.mp3Url);
-    });
+    };
+
+    // === Microphone Button ===
+    const micButton = document.createElement("div");
+    micButton.innerText = "Use\nMicrophone\nInput 🎤";
+    micButton.style.marginTop = "20px";
+    micButton.style.cursor = "pointer";
+    micButton.style.textAlign = "center";
+    micButton.style.whiteSpace = "pre-line";
+    micButton.style.border = "2px dashed #333";
+    micButton.style.borderRadius = "20px";
+    micButton.style.padding = "10px 20px";
+    micButton.style.background = "rgba(255, 255, 255, 0.3)";
+    micButton.onclick = function () {
+      if (audioStarted) return;
+      audioStarted = true;
+      ui.domNode.remove();
+      audio.useMicInput();
+    };
+
+    // === Add buttons to UI ===
+    ui.domNode.appendChild(playButton);
+    ui.domNode.appendChild(micButton);
 
     sandbox.appendTo(document.body);
     document.body.appendChild(ui.domNode);

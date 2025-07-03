@@ -1,82 +1,98 @@
-define(function(){
-    'use strict';
+define(function () {
+  "use strict";
 
-    function loadUrl(url, onloadfn, onerrorfn){
+  function requiredOptions(opt) {
+    if (!opt.bufferWidth) {
+      throw new Error("bufferWidth is required");
     }
-
-    function requiredOptions(opt){
-        // if(!opt.src){
-        //     throw new Error('src is required');
-        // }
-        if(!opt.bufferWidth){
-            throw new Error('bufferWidth is required');
-        }
-        if(!opt.onTick){
-            throw new Error('onTick is required');
-        }
+    if (!opt.onTick) {
+      throw new Error("onTick is required");
     }
+  }
 
-    function AudioData(options){
-        requiredOptions(options || {});
+  function AudioData(options) {
+    requiredOptions(options || {});
+    this.bufferWidth = options.bufferWidth;
+    this.onTick = options.onTick;
 
-        this.bufferWidth = options.bufferWidth;
-        this.onTick = options.onTick;
+    // Create a single shared AudioContext
+    this.context = new (window.AudioContext || window.webkitAudioContext)();
+    this.analyser = null;
+    this.source = null;
 
-        if(options.src){
-            this.loadUrl(options.src);
-        }
+    if (options.src) {
+      this.loadUrl(options.src);
     }
+  }
 
-    AudioData.prototype.loadUrl = function loadUrl(url){
-        var xhr = new XMLHttpRequest();
-        var onLoadAudio = this.onLoadAudio.bind(this);
-        xhr.open('GET', url, true);
-        xhr.responseType = 'arraybuffer';
+  AudioData.prototype.loadUrl = function (url) {
+    const that = this;
+    const xhr = new XMLHttpRequest();
+    xhr.open("GET", url, true);
+    xhr.responseType = "arraybuffer";
 
-        xhr.onload = function(){
-            onLoadAudio(xhr.response);
-        };
-
-        xhr.send();
+    xhr.onload = function () {
+      that.onLoadAudio(xhr.response);
     };
 
-    AudioData.prototype.onLoadAudio = function onLoadAudio(data){
-        var context = new AudioContext();
-        var bufferWidth = this.bufferWidth * 2;
-        var that = this;
-
-        context.decodeAudioData(data, function(buffer){
-            var analyser = context.createAnalyser();
-
-            analyser.connect(context.destination);
-            analyser.fftSize = bufferWidth;
-
-            that.source = context.createBufferSource();
-            that.source.buffer = buffer;
-            that.source.connect(analyser);
-
-            that.start(analyser, bufferWidth);
-        });
+    xhr.onerror = function () {
+      console.error("Error loading audio from", url);
     };
 
-    AudioData.prototype.start = function(analyser, bufferWidth){
-        var dataArray = new Uint8Array(bufferWidth);
-        var onTick = this.onTick;
-        var bufferWidth = this.bufferWidth;
+    xhr.send();
+  };
 
-        var numTicks = 0;
-        function tick(){
-            requestAnimationFrame(tick);
+  AudioData.prototype.onLoadAudio = function (data) {
+    const that = this;
+    const context = this.context;
+    const bufferWidth = this.bufferWidth * 2;
 
-            analyser.getByteFrequencyData(dataArray);
+    context.decodeAudioData(data, function (buffer) {
+      that.analyser = context.createAnalyser();
+      that.analyser.fftSize = bufferWidth;
+      that.analyser.connect(context.destination);
 
-            onTick(Array.apply(null, dataArray).slice(0, bufferWidth));
-        }
+      that.source = context.createBufferSource();
+      that.source.buffer = buffer;
+      that.source.connect(that.analyser);
 
-        this.source.start(0);
-        requestAnimationFrame(tick);
-    };
+      that.source.start(0);
+      that.start();
+    });
+  };
 
-    return AudioData;
+  AudioData.prototype.useMicInput = function () {
+    const that = this;
 
+    navigator.mediaDevices
+      .getUserMedia({ audio: true })
+      .then(function (stream) {
+        const source = that.context.createMediaStreamSource(stream);
+        that.analyser = that.context.createAnalyser();
+        that.analyser.fftSize = that.bufferWidth * 2;
+
+        source.connect(that.analyser);
+        that.start();
+      })
+      .catch(function (err) {
+        console.error("Microphone access denied or failed:", err);
+      });
+  };
+
+  AudioData.prototype.start = function () {
+    const analyser = this.analyser;
+    const dataArray = new Uint8Array(analyser.frequencyBinCount);
+    const onTick = this.onTick;
+    const bufferWidth = this.bufferWidth;
+
+    function tick() {
+      requestAnimationFrame(tick);
+      analyser.getByteFrequencyData(dataArray);
+      onTick(Array.from(dataArray).slice(0, bufferWidth));
+    }
+
+    requestAnimationFrame(tick);
+  };
+
+  return AudioData;
 });
