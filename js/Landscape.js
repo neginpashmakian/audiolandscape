@@ -13,24 +13,10 @@ define(function () {
         var aIndex = Math.floor((aVertexY - mountainLevel) / 2);
         var bIndex = Math.floor((bVertexY - mountainLevel) / 2);
         var cIndex = Math.floor((cVertexY - mountainLevel) / 2);
-        if (aIndex < 0) {
-          aIndex = 0;
-        }
-        if (bIndex < 0) {
-          bIndex = 0;
-        }
-        if (cIndex < 0) {
-          cIndex = 0;
-        }
-        if (aIndex > 5) {
-          aIndex = 5;
-        }
-        if (bIndex > 5) {
-          bIndex = 5;
-        }
-        if (cIndex > 5) {
-          cIndex = 5;
-        }
+        aIndex = Math.max(0, Math.min(5, aIndex));
+        bIndex = Math.max(0, Math.min(5, bIndex));
+        cIndex = Math.max(0, Math.min(5, cIndex));
+
         geometry.faces[k].vertexColors[0] = new THREE.Color(colours[aIndex]);
         geometry.faces[k].vertexColors[1] = new THREE.Color(colours[bIndex]);
         geometry.faces[k].vertexColors[2] = new THREE.Color(colours[cIndex]);
@@ -71,10 +57,9 @@ define(function () {
   }
 
   function addFaces(geometry, resolution, totalRows) {
-    var rowOffset;
     for (var i = 0; i < totalRows - 1; i++) {
       for (var j = 0; j < resolution * 2 - 1; j++) {
-        rowOffset = i * resolution * 2;
+        var rowOffset = i * resolution * 2;
         addFace(geometry, rowOffset + j, rowOffset + resolution * 2 + j + 1);
       }
     }
@@ -96,24 +81,6 @@ define(function () {
     }
   }
 
-  function highestPointInLine(
-    vertices,
-    xOffset,
-    zOffset,
-    rowLength,
-    lineLength
-  ) {
-    var max = 0;
-    var y;
-    while (lineLength--) {
-      y = vertices[xOffset + rowLength * (zOffset - lineLength)].y;
-      if (y > max) {
-        max = y;
-      }
-    }
-    return y;
-  }
-
   function buildGeometry(
     geometry,
     resolution,
@@ -132,19 +99,10 @@ define(function () {
     geometry.computeVertexNormals();
   }
 
-  function buildMesh(geometry, includeWireframe) {
+  function buildMesh(geometry) {
     var material = new THREE.MeshLambertMaterial({
       vertexColors: THREE.VertexColors,
     });
-    if (includeWireframe) {
-      return THREE.SceneUtils.createMultiMaterialObject(geometry, [
-        material,
-        new THREE.MeshBasicMaterial({
-          color: 0xffffff,
-          wireframe: true,
-        }),
-      ]);
-    }
     return new THREE.Mesh(geometry, material);
   }
 
@@ -178,7 +136,7 @@ define(function () {
     this.cameraXRange = options.cameraXRange;
 
     this.geometry = new THREE.Geometry();
-    this.mesh = buildMesh(this.geometry, options.wireframeOverlay);
+    this.mesh = buildMesh(this.geometry);
     this.mesh.position.x = options.meshX;
     this.mesh.position.z = options.meshZ;
     this.mesh.castShadow = true;
@@ -218,44 +176,32 @@ define(function () {
   };
 
   Landscape.prototype.onAudioTick = function onAudioTick(frequencyData) {
-    const t = performance.now() * 0.002; // Time variable for continuous animation
+    const t = performance.now() * 0.0005; // slow animation speed
     const resolution = this.resolution;
     const numRows = this.numRows;
     const geometry = this.geometry;
 
-    const waveHeightBase = 4; // Base wave height
-    const waveFreqX = 0.25; // Horizontal wave frequency
-    const waveFreqZ = 0.15; // Vertical wave frequency
-    const audioBoost = 0.2; // Influence of audio on wave height
-
-    // Calculate average volume or bass for wave height adjustment
-    let sum = 0;
-    for (let i = 0; i < frequencyData.length; i++) {
-      sum += frequencyData[i];
-    }
-    const avgVolume = sum / frequencyData.length; // Average volume of frequencies
-    const waveHeight = waveHeightBase + avgVolume * audioBoost; // Adjust wave height based on volume
+    const waveHeight = 6;
+    const noiseScale = 0.1;
+    const audioBoost = 0.2;
 
     const vertices = geometry.vertices;
 
-    // Loop through vertices to apply dynamic wave effect
     for (let z = 0; z < numRows; z++) {
       for (let x = 0; x < resolution * 2; x++) {
         const i = z * resolution * 2 + x;
 
-        const waveX = Math.sin(x * waveFreqX + t); // Horizontal wave
-        const waveZ = Math.cos(z * waveFreqZ + t * 1.5); // Vertical wave
-        const freq = frequencyData[x % resolution] || 0; // Audio frequency data
+        const nx = x * noiseScale;
+        const nz = z * noiseScale;
+        const noiseVal = noise.perlin2(nx + t, nz + t);
+        const freq = frequencyData[x % resolution] || 0;
 
-        // Combined wave with slight audio variation
-        vertices[i].y = waveX * waveZ * waveHeight + freq * audioBoost * 0.1;
+        vertices[i].y = noiseVal * waveHeight + freq * audioBoost * 0.1;
       }
     }
 
-    // Update geometry with new heights for each vertex
     geometry.verticesNeedUpdate = true;
-
-    // Color the geometry based on water and mountain levels
+    geometry.computeVertexNormals();
     colourVertices(geometry, this.colours, this.waterLevel, this.mountainLevel);
   };
 

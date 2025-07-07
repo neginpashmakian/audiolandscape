@@ -3,6 +3,7 @@ require(["viz"], function (viz) {
 
   function launchCrystalCavern() {
     viz({
+      resolution: 96,
       fogColour: 0x99ccff,
       fogMinimumDistance: 600,
       landColours: [
@@ -15,19 +16,18 @@ require(["viz"], function (viz) {
       skyMap: "img/sky.jpg",
       cameraHeight: 30,
       mp3Url: "mp3/starworshipper.mp3",
-      wireframeOverlay: false,
       landscapeType: "inverted",
     });
   }
 
   function launchSeaSky() {
     viz({
+      resolution: 96,
       useFog: false,
       fogMinimumDistance: 400,
       landColours: [
         0x002b5c, 0x004c99, 0x0077be, 0x00bfff, 0xaaddff, 0xe0f7fa, 0xf0f0e0,
       ],
-      wireframeOverlay: true,
       spotlightColour: 0x88ccff,
       includeDetail: true,
       detailType: "foam",
@@ -42,12 +42,12 @@ require(["viz"], function (viz) {
 
   function launchVapor() {
     viz({
+      resolution: 96,
       useFog: false,
       landColours: [
         0x88ccff, 0x004477, 0x006699, 0x3399cc, 0x66ccff, 0xaaddff, 0xffffff,
       ],
       detailType: "foam",
-      wireframeOverlay: true,
       spotlightColour: 0x88ccff,
       includeDetail: false,
       waterColour: 0x0066cc,
@@ -60,6 +60,7 @@ require(["viz"], function (viz) {
 
   function launchVolcano() {
     viz({
+      resolution: 96,
       fogColour: 0x000000,
       fogMinimumDistance: 200,
       landColours: [
@@ -77,6 +78,7 @@ require(["viz"], function (viz) {
 
   function launchHills() {
     viz({
+      resolution: 96,
       fogColour: 0xfff5ac,
       fogMinimumDistance: 700,
       landColours: [
