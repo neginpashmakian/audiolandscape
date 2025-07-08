@@ -1,12 +1,17 @@
 define(function () {
   function colourVertices(geometry, colours, waterLevel, mountainLevel) {
+    const verts = geometry.vertices;
+    const maxZ = Math.abs(verts[verts.length - 1].z); // for fade
+
     for (let k = 0; k < geometry.faces.length; k++) {
       const face = geometry.faces[k];
-      const vA = geometry.vertices[face.a];
-      const vB = geometry.vertices[face.b];
-      const vC = geometry.vertices[face.c];
+      const vA = verts[face.a];
+      const vB = verts[face.b];
+      const vC = verts[face.c];
 
       const avgY = (vA.y + vB.y + vC.y) / 3;
+      const avgZ = Math.abs((vA.z + vB.z + vC.z) / 3);
+
       const t = Math.max(
         0,
         Math.min(1, (avgY - waterLevel) / (mountainLevel - waterLevel))
@@ -14,7 +19,12 @@ define(function () {
       const index = Math.floor(t * (colours.length - 1));
       const baseColor = new THREE.Color(colours[index]);
 
-      face.vertexColors = [baseColor, baseColor, baseColor];
+      const zFade = 1.0 - Math.min(1, avgZ / maxZ);
+      const finalColor = baseColor
+        .clone()
+        .lerp(new THREE.Color("#000000"), 1 - zFade);
+
+      face.vertexColors = [finalColor, finalColor, finalColor];
     }
 
     geometry.colorsNeedUpdate = true;
@@ -77,7 +87,12 @@ define(function () {
   function buildMesh(geometry) {
     return new THREE.Mesh(
       geometry,
-      new THREE.MeshLambertMaterial({ vertexColors: THREE.VertexColors })
+      new THREE.MeshLambertMaterial({
+        vertexColors: THREE.VertexColors,
+        transparent: true,
+        opacity: 0.95,
+        side: THREE.DoubleSide,
+      })
     );
   }
 
@@ -153,11 +168,15 @@ define(function () {
     const numRows = this.numRows;
     const geometry = this.geometry;
 
-    const waveHeight = 8; // slightly reduced for smoother shape
-    const waveFreqX = 0.15; // lower = smoother wave pattern
+    const baseWaveHeight = 8;
+    const waveFreqX = 0.15;
     const waveFreqZ = 0.1;
-    const audioBoost = 0.35; // stronger response to audio
-    const smoothingFactor = 0.5; // 0 = no smooth, 1 = instant snap
+    const audioBoost = 0.35;
+    const smoothingFactor = 0.5;
+
+    const avgVolume =
+      frequencyData.reduce((a, b) => a + b, 0) / frequencyData.length;
+    const dynamicWaveHeight = baseWaveHeight + avgVolume * 0.05;
 
     const vertices = geometry.vertices;
     for (let z = 0; z < numRows; z++) {
@@ -169,9 +188,8 @@ define(function () {
         const wave =
           Math.sin(x * waveFreqX + t + rowPhase) * Math.cos(z * waveFreqZ + t);
 
-        const targetY = wave * waveHeight + freq * audioBoost * 0.05;
+        const targetY = wave * dynamicWaveHeight + freq * audioBoost * 0.05;
 
-        // Apply interpolation for smoothing
         vertices[i].y =
           vertices[i].y * (1 - smoothingFactor) + targetY * smoothingFactor;
       }
