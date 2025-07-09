@@ -30,7 +30,7 @@ define(function () {
     bird.add(head);
 
     // Scale larger for visibility
-    bird.scale.set(2, 2, 2);
+    bird.scale.set(3, 3, 3);
 
     return bird;
   };
