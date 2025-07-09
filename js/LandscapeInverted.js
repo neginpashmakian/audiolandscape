@@ -1,7 +1,27 @@
 define(function () {
   function colourVertices(geometry, colours, waterLevel, mountainLevel) {
     const verts = geometry.vertices;
-    const maxZ = Math.abs(verts[verts.length - 1].z); // for fade
+    const maxZ = Math.abs(verts[verts.length - 1].z);
+    const seaColor = new THREE.Color("#2a4d6b"); // consistent sea tone
+
+    function computeColor(y, z) {
+      const heightAboveWater = y - waterLevel;
+      const zFade = 1.0 - Math.min(1, Math.abs(z) / maxZ);
+
+      let color;
+      if (heightAboveWater < 0.5) {
+        const brightness = 0.5 + 0.5 * Math.max(0, heightAboveWater / 0.5);
+        color = seaColor.clone().multiplyScalar(brightness);
+      } else {
+        const t = Math.min(1, heightAboveWater / (mountainLevel - waterLevel));
+        const index = Math.floor(t * (colours.length - 1));
+        const baseColor = new THREE.Color(colours[index]);
+
+        color = baseColor;
+      }
+
+      return color.lerp(new THREE.Color("#000000"), 1 - zFade);
+    }
 
     for (let k = 0; k < geometry.faces.length; k++) {
       const face = geometry.faces[k];
@@ -9,22 +29,11 @@ define(function () {
       const vB = verts[face.b];
       const vC = verts[face.c];
 
-      const avgY = (vA.y + vB.y + vC.y) / 3;
-      const avgZ = Math.abs((vA.z + vB.z + vC.z) / 3);
-
-      const t = Math.max(
-        0,
-        Math.min(1, (avgY - waterLevel) / (mountainLevel - waterLevel))
-      );
-      const index = Math.floor(t * (colours.length - 1));
-      const baseColor = new THREE.Color(colours[index]);
-
-      const zFade = 1.0 - Math.min(1, avgZ / maxZ);
-      const finalColor = baseColor
-        .clone()
-        .lerp(new THREE.Color("#000000"), 1 - zFade);
-
-      face.vertexColors = [finalColor, finalColor, finalColor];
+      face.vertexColors = [
+        computeColor(vA.y, vA.z),
+        computeColor(vB.y, vB.z),
+        computeColor(vC.y, vC.z),
+      ];
     }
 
     geometry.colorsNeedUpdate = true;
@@ -92,6 +101,7 @@ define(function () {
         transparent: true,
         opacity: 0.95,
         side: THREE.DoubleSide,
+        flatShading: false,
       })
     );
   }

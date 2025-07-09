@@ -31,7 +31,7 @@ require(["viz"], function (viz) {
       spotlightColour: 0x88ccff,
       includeDetail: true,
       detailType: "foam",
-      waterColour: 0x0066cc,
+      waterColour: "#073d61",
       skyMap: "img/sky.jpg",
       cameraHeight: 15,
       mp3Url: "mp3/morning-mood-grieg.mp3",
