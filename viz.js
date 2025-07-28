@@ -26,6 +26,7 @@ define([
   "use strict";
 
   return function viz(config) {
+    // This adds a performance FPS counter to the top of the screen for debugging frame rates using the Stats.js library.
     function makeStats() {
       var stats = new Stats();
       stats.domElement.style.position = "absolute";
@@ -45,8 +46,10 @@ define([
     const useFog = config.useFog !== false;
     const systemX = -390;
     const systemZ = 115;
+    // This initializes a custom wrapper around a Three.js scene, camera, and renderer.
 
     const sandbox = new Sandbox();
+    // // Loads and displays a sky image as a background plane
 
     if (config.skyMap) {
       const loader = new THREE.TextureLoader();
@@ -67,7 +70,7 @@ define([
         sandbox.scene.add(skyPlane);
       });
     }
-
+    //Adds atmospheric fog for depth effect and mood.
     if (useFog) {
       sandbox.scene.fog = new THREE.Fog(config.fogColour, 0, 800);
     }
@@ -105,7 +108,7 @@ define([
       spotlightZ: 900,
       spotlightColour: config.spotlightColour,
     });
-
+    //Adds non-animated scenery elements like water color and ground overlays.
     const staticDecoration = new StaticDecoration({
       waterLevel,
       waterColour: config.waterColour,
@@ -114,7 +117,7 @@ define([
 
     let cameraTargetY = 0;
     let cameraAccel = 0;
-
+    //Smoothly moves the camera up/down to follow the wave height beneath it.
     function moveCamera() {
       const delta = cameraTargetY - sandbox.camera.position.y;
       const accelChange = delta / 100;
@@ -126,6 +129,10 @@ define([
 
     const audio = new AudioData({
       bufferWidth: resolution,
+
+      // landscape.onAudioTick(freqArray): makes the waves pulse based on the frequency spectrum.
+
+      // lighting.onAudioTick(freqArray): optional dynamic lighting effects.
       onTick: function (freqArray) {
         landscape.onAudioTick(freqArray);
         lighting.onAudioTick(freqArray);
@@ -168,11 +175,22 @@ define([
         }
       },
     });
-
+    //Creates the boat mesh using your boat.js module and adds it to the scene.
     // === Add Boat ===
     boat = buildBoat();
     boat.position.set(0, 4, 100);
     sandbox.add(boat);
+    // This is our main render loop. It:
+
+    // Animates bird wings
+
+    // Moves birds forward
+
+    // Cleans up off-screen birds
+
+    // Updates fog based on spotlight height
+
+    // Keeps the scene continuously updating
 
     function tick() {
       requestAnimationFrame(tick);
